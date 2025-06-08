@@ -10,28 +10,7 @@ from vllm import LLM, SamplingParams
 
 from tqdm import tqdm
 
-from arvind_test.utils import load_resume_data, load_llm_and_tokenizer
-
-
-def gen_prompt(system_prompt, text, tokenizer, args):
-    if "gemma" in args.model:
-        messages = [
-            {"role": "user", "content": f"{system_prompt} Here is a user query: {text}"},
-        ]
-
-    else:
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text},
-        ]
-    prompt = tokenizer.apply_chat_template(
-        messages, 
-        tokenize=False, 
-        add_generation_prompt=True,
-
-    )
-    return prompt
-
+from arvind_test.utils import load_resume_data, load_llm_and_tokenizer, gen_prompt
 
 
 def main(args):
