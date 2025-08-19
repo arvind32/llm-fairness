@@ -17,4 +17,4 @@ To run the example script, loading resume data and producing test outputs (linux
 
 There is an LLM playground available at:
 
-    notebooks/playground.ipynb
+    notebooks/resume_scoring.ipynb

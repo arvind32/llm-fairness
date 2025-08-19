@@ -52,5 +52,38 @@ def load_llm_and_tokenizer(model_name, n_device):
 
 def load_resume_data():
 
-    df = pd.read_csv("/local/zemel/tom/code/arvind_test/data/generated_resumes_with_personas_no_race.csv")
+    df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_resumes_with_personas_no_race.csv")
     return df
+
+def load_resume_data_with_race():
+    
+    resumes_df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_resumes_with_personas_no_race.csv")
+    print('testing testing')
+    # print(len(resumes_df))
+    # print(resumes_df.head())
+    # print()
+    # resumes_df = resumes_df[resumes_df["job"] == args.job]
+
+    full_names_df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_names.csv")
+    # print(full_names_df.head())
+    
+    flag = False
+
+    for race in ["white", "black", "asian", "hispanic"]:
+
+        # if race == "anon":
+
+        #     data_df = resumes_df
+        #     # resumes = data_df["resume"].tolist()
+
+        # else:
+
+        names_df = full_names_df[full_names_df["Race"] == race]
+        temp = pd.merge(resumes_df, names_df, on='person_id')
+        if flag:
+            data_df = pd.concat([data_df, temp], ignore_index=True)
+        else:
+            data_df = temp
+            flag = True
+
+    return data_df

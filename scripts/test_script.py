@@ -10,7 +10,7 @@ from vllm import LLM, SamplingParams
 
 from tqdm import tqdm
 
-from arvind_test.utils import load_resume_data, load_llm_and_tokenizer, gen_prompt
+from llm_fairness.utils import load_resume_data, load_llm_and_tokenizer, gen_prompt
 
 
 def main(args):
