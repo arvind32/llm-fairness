@@ -43,7 +43,7 @@ python trl/scripts/dpo.py \
 python trl/scripts/dpo.py \
     --dataset_name trl-lib/ultrafeedback_binarized \
     --dataset_streaming \
-    --model_name_or_path Qwen/Qwen2-0.5B-Instruct \
+    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --learning_rate 5.0e-6 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 2 \
