@@ -40,10 +40,10 @@ python trl/scripts/dpo.py \
 
 # LoRA:
 ```bash
-python trl/scripts/dpo.py \
+python arvind/code/llm_fairness/scripts/dpo_finetuning.py \
     --dataset_name trl-lib/ultrafeedback_binarized \
     --dataset_streaming \
-    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
+    --model_name_or_path hf/models--meta-llama--Llama-3.1-8B-Instruct \
     --learning_rate 5.0e-6 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 2 \
@@ -51,7 +51,7 @@ python trl/scripts/dpo.py \
     --gradient_checkpointing \
     --eval_strategy steps \
     --eval_steps 50 \
-    --output_dir Qwen2-0.5B-DPO \
+    --output_dir hf/models--meta-llama--Llama-3.1-8B-DPO \
     --no_remove_unused_columns \
     --use_peft \
     --lora_r 32 \
@@ -81,44 +81,47 @@ from trl import (
 )
 from trl.trainer.utils import SIMPLE_CHAT_TEMPLATE
 
+test_flag = True
+
 
 def main(script_args, training_args, model_args, dataset_args):
     ################
     # Model & Tokenizer
     ###################
-    torch_dtype = (
-        model_args.torch_dtype if model_args.torch_dtype in ["auto", None] else getattr(torch, model_args.torch_dtype)
-    )
-    quantization_config = get_quantization_config(model_args)
-    model_kwargs = dict(
-        revision=model_args.model_revision,
-        attn_implementation=model_args.attn_implementation,
-        torch_dtype=torch_dtype,
-        device_map=get_kbit_device_map() if quantization_config is not None else None,
-        quantization_config=quantization_config,
-    )
-    model = AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code, **model_kwargs
-    )
-    peft_config = get_peft_config(model_args)
-    if peft_config is None:
-        ref_model = AutoModelForCausalLM.from_pretrained(
+    if not test_flag:
+        torch_dtype = (
+            model_args.torch_dtype if model_args.torch_dtype in ["auto", None] else getattr(torch, model_args.torch_dtype)
+        )
+        quantization_config = get_quantization_config(model_args)
+        model_kwargs = dict(
+            revision=model_args.model_revision,
+            attn_implementation=model_args.attn_implementation,
+            torch_dtype=torch_dtype,
+            device_map=get_kbit_device_map() if quantization_config is not None else None,
+            quantization_config=quantization_config,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code, **model_kwargs
         )
-    else:
-        ref_model = None
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code
-    )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    if tokenizer.chat_template is None:
-        tokenizer.chat_template = SIMPLE_CHAT_TEMPLATE
-    if script_args.ignore_bias_buffers:
-        # torch distributed hack
-        model._ddp_params_and_buffers_to_ignore = [
-            name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
-        ]
+        peft_config = get_peft_config(model_args)
+        if peft_config is None:
+            ref_model = AutoModelForCausalLM.from_pretrained(
+                model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code, **model_kwargs
+            )
+        else:
+            ref_model = None
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        if tokenizer.chat_template is None:
+            tokenizer.chat_template = SIMPLE_CHAT_TEMPLATE
+        if script_args.ignore_bias_buffers:
+            # torch distributed hack
+            model._ddp_params_and_buffers_to_ignore = [
+                name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
+            ]
 
     # Load the dataset
     if dataset_args.datasets and script_args.dataset_name:
@@ -134,6 +137,20 @@ def main(script_args, training_args, model_args, dataset_args):
         )
     else:
         raise ValueError("Either `datasets` or `dataset_name` must be provided.")
+    if test_flag:
+        # print('\n\n********\n\n'
+        #       'script_args: ',script_args,
+        #       '\n\n script_args/dataset_name: ',
+        #       script_args.dataset_name,
+        #       '\n\n********\n\n')
+        for example in dataset['train']:
+            print('\n\n********\n\n',
+                  example,
+                  '\n\n********\n\n')
+            break
+        # print(dataset['train'][0])
+        raise SystemExit
+
 
     # Initialize the DPO trainer
     trainer = DPOTrainer(

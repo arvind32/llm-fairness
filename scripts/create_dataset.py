@@ -36,9 +36,10 @@ def prepare_dpo_dataset(scores_file, pairs_file, resumes_file, output_file):
 
     # Add content column
     instruction = (
+        "You are a resume reviewer.\n\n"
         "Summarize the following resume in 2-3 sentences maximum. "
         "Use the placeholder [NAME] for the person’s name. "
-        "Only return the summary, i.e., do not say ‘Here is the summary...’ "
+        "Only return the summary, i.e., do not say ‘Here is the summary...’ \n\n"
     )
     dpo_df['content'] = instruction + resumes_df['resume'].astype(str)
 
