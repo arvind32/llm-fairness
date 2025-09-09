@@ -1,6 +1,6 @@
 import pandas as pd
 from vllm import LLM, SamplingParams
-
+from pathlib import Path
 
 class DictToObject:
     def __init__(self, dictionary):
@@ -55,35 +55,38 @@ def load_resume_data():
     df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_resumes_with_personas_no_race.csv")
     return df
 
-def load_resume_data_with_race():
+def load_resume_data_with_race(overwrite = False):
     
-    resumes_df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_resumes_with_personas_no_race.csv")
-    print('testing testing')
-    # print(len(resumes_df))
-    # print(resumes_df.head())
-    # print()
-    # resumes_df = resumes_df[resumes_df["job"] == args.job]
+    folder = Path("/local/zemel/arvind/code/llm_fairness/data")
+    filename = "generated_resumes_with_namesinresume.csv"
+
+    # if file already exists, return the corresponding dataframe without overwriting
+    if (folder / filename).exists() and not overwrite:
+        resumes_df = pd.read_csv(folder / filename)
+        return resumes_df
+
+    # if file does not exist, or if overwrite is True, create a new file
+    noname_resumes_df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_resumes_with_personas_no_race.csv")
 
     full_names_df = pd.read_csv("/local/zemel/arvind/code/llm_fairness/data/generated_names.csv")
-    # print(full_names_df.head())
     
     flag = False
 
     for race in ["white", "black", "asian", "hispanic"]:
 
-        # if race == "anon":
-
-        #     data_df = resumes_df
-        #     # resumes = data_df["resume"].tolist()
-
-        # else:
-
         names_df = full_names_df[full_names_df["Race"] == race]
-        temp = pd.merge(resumes_df, names_df, on='person_id')
+        temp = pd.merge(noname_resumes_df, names_df, on='person_id')
         if flag:
-            data_df = pd.concat([data_df, temp], ignore_index=True)
+            resumes_df = pd.concat([resumes_df, temp], ignore_index=True)
         else:
-            data_df = temp
+            resumes_df = temp
             flag = True
 
-    return data_df
+    # Replace placeholders in 'resume' field with actual names and emails
+    resumes_df['resume'] = resumes_df.apply(lambda row: row['resume'].replace('[NAME]', row['Name']), axis=1)
+    resumes_df['resume'] = resumes_df.apply(lambda row: row['resume'].replace('[EMAIL]', row['Email']), axis=1)
+    
+    resumes_df.to_csv('/local/zemel/arvind/code/llm_fairness/data/generated_resumes_with_namesinresume.csv', 
+                      index=False)
+    
+    return resumes_df

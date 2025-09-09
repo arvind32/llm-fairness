@@ -43,7 +43,7 @@ python trl/scripts/dpo.py \
 python arvind/code/llm_fairness/scripts/dpo_finetuning.py \
     --dataset_name trl-lib/ultrafeedback_binarized \
     --dataset_streaming \
-    --model_name_or_path hf/models--meta-llama--Llama-3.1-8B-Instruct \
+    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --learning_rate 5.0e-6 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 2 \
@@ -51,7 +51,7 @@ python arvind/code/llm_fairness/scripts/dpo_finetuning.py \
     --gradient_checkpointing \
     --eval_strategy steps \
     --eval_steps 50 \
-    --output_dir hf/models--meta-llama--Llama-3.1-8B-DPO \
+    --output_dir /local/zemel/hf/Llama-3.1-8B-DPO \
     --no_remove_unused_columns \
     --use_peft \
     --lora_r 32 \
@@ -81,13 +81,23 @@ from trl import (
 )
 from trl.trainer.utils import SIMPLE_CHAT_TEMPLATE
 
-test_flag = True
+test_flag = False
 
 
 def main(script_args, training_args, model_args, dataset_args):
     ################
     # Model & Tokenizer
     ###################
+    print("Script Args\n", script_args)
+    print("-"*20)
+    print("Training Args\n", training_args)
+    print("-"*20)
+    print("Model Args\n", model_args)
+    print("-"*20)
+    print("Dataset Args\n", dataset_args)
+    print("-"*20)
+    # return
+
     if not test_flag:
         torch_dtype = (
             model_args.torch_dtype if model_args.torch_dtype in ["auto", None] else getattr(torch, model_args.torch_dtype)
@@ -138,20 +148,15 @@ def main(script_args, training_args, model_args, dataset_args):
     else:
         raise ValueError("Either `datasets` or `dataset_name` must be provided.")
     if test_flag:
-        # print('\n\n********\n\n'
-        #       'script_args: ',script_args,
-        #       '\n\n script_args/dataset_name: ',
-        #       script_args.dataset_name,
-        #       '\n\n********\n\n')
         for example in dataset['train']:
             print('\n\n********\n\n',
                   example,
                   '\n\n********\n\n')
             break
-        # print(dataset['train'][0])
         raise SystemExit
 
-
+    training_args.max_steps = 101
+    
     # Initialize the DPO trainer
     trainer = DPOTrainer(
         model,
@@ -160,7 +165,8 @@ def main(script_args, training_args, model_args, dataset_args):
         train_dataset=dataset[script_args.dataset_train_split],
         eval_dataset=dataset[script_args.dataset_test_split] if training_args.eval_strategy != "no" else None,
         processing_class=tokenizer,
-        peft_config=peft_config,
+        peft_config=peft_config
+        # max_steps=1
     )
 
     # Train the model

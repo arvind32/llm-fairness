@@ -1,0 +1,17 @@
+python /local/zemel/arvind/code/llm_fairness/scripts/dpo_finetuning.py \
+    --dataset_name trl-lib/ultrafeedback_binarized \
+    --dataset_streaming \
+    --model_name_or_path HuggingFaceTB/SmolLM-135M\
+    --learning_rate 5.0e-6 \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 16 \
+    --gradient_accumulation_steps 2 \
+    --gradient_checkpointing \
+    --eval_strategy steps \
+    --eval_steps 10 \
+    --output_dir /local/zemel/arvind/code/llm_fairness/models/SmolLM-135M-DPO \
+    --no_remove_unused_columns \
+    --use_peft \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --report_to wandb
